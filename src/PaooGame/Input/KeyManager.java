@@ -12,7 +12,7 @@ import java.awt.event.KeyListener;
  */
 public class KeyManager implements KeyListener
 {
-    private boolean[] keys; /*!< Vector de flaguri pentru toate tastele. Tastele vor fi regasite dupa cod [0 - 255]*/
+    public boolean[] keys; /*!< Vector de flaguri pentru toate tastele. Tastele vor fi regasite dupa cod [0 - 255]*/
     public boolean up;      /*!< Flag pentru tasta "sus" apasata.*/
     public boolean down;    /*!< Flag pentru tasta "jos" apasata.*/
     public boolean left;    /*!< Flag pentru tasta "stanga" apasata.*/
@@ -23,8 +23,9 @@ public class KeyManager implements KeyListener
      */
     public KeyManager()
     {
-            ///Constructie vector de flaguri aferente tastelor.
+        ///Constructie vector de flaguri aferente tastelor.
         keys = new boolean[256];
+        System.out.println("✓ KeyManager initializat");
     }
 
 
@@ -44,8 +45,17 @@ public class KeyManager implements KeyListener
     @Override
     public void keyPressed(KeyEvent e)
     {
-            ///se retine in vectorul de flaguri ca o tasta a fost apasata.
-        keys[e.getKeyCode()] = true;
+        int keyCode = e.getKeyCode();
+        if (keyCode >= 0 && keyCode < keys.length) {
+            keys[keyCode] = true;
+
+            // Debug pentru taste importante in meniu
+            if (keyCode == KeyEvent.VK_W) System.out.println("Tasta W apasata");
+            if (keyCode == KeyEvent.VK_S) System.out.println("Tasta S apasata");
+            if (keyCode == KeyEvent.VK_ENTER) System.out.println("Tasta ENTER apasata");
+            if (keyCode == KeyEvent.VK_SPACE) System.out.println("Tasta SPACE apasata");
+            if (keyCode == KeyEvent.VK_ESCAPE) System.out.println("Tasta ESCAPE apasata");
+        }
     }
 
     /*! \fn public void keyReleased(KeyEvent e)
@@ -56,8 +66,10 @@ public class KeyManager implements KeyListener
     @Override
     public void keyReleased(KeyEvent e)
     {
-            ///se retine in vectorul de flaguri ca o tasta a fost eliberata.
-        keys[e.getKeyCode()] = false;
+        int keyCode = e.getKeyCode();
+        if (keyCode >= 0 && keyCode < keys.length) {
+            keys[keyCode] = false;
+        }
     }
 
     /*! \fn public void keyTyped(KeyEvent e)

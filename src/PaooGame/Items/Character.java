@@ -31,9 +31,9 @@ public abstract class Character extends Item
      */
     public Character(RefLinks refLink, float x, float y, int width, int height)
     {
-            ///Apel constructor la clasei de baza
+        ///Apel constructor la clasei de baza
         super(refLink, x,y, width, height);
-            //Seteaza pe valorile implicite pentru viata, viteza si distantele de deplasare
+        //Seteaza pe valorile implicite pentru viata, viteza si distantele de deplasare
         life    = DEFAULT_LIFE;
         speed   = DEFAULT_SPEED;
         xMove   = 0;
@@ -45,8 +45,8 @@ public abstract class Character extends Item
      */
     public void Move()
     {
-            ///Modifica pozitia caracterului pe axa X.
-            ///Modifica pozitia caracterului pe axa Y.
+        ///Modifica pozitia caracterului pe axa X.
+        ///Modifica pozitia caracterului pe axa Y.
         MoveX();
         MoveY();
     }
@@ -56,7 +56,7 @@ public abstract class Character extends Item
      */
     public void MoveX()
     {
-            ///Aduna la pozitia curenta numarul de pixeli cu care trebuie sa se deplaseze pe axa X.
+        ///Aduna la pozitia curenta numarul de pixeli cu care trebuie sa se deplaseze pe axa X.
         x += xMove;
     }
 
@@ -65,7 +65,7 @@ public abstract class Character extends Item
      */
     public void MoveY()
     {
-            ///Aduna la pozitia curenta numarul de pixeli cu care trebuie sa se deplaseze pe axa Y.
+        ///Aduna la pozitia curenta numarul de pixeli cu care trebuie sa se deplaseze pe axa Y.
         y += yMove;
     }
 
@@ -94,7 +94,7 @@ public abstract class Character extends Item
     }
 
     /*! \fn public void SetSpeed(float speed)
-        \brief
+        \brief Seteaza viteza caracterului.
      */
     public void SetSpeed(float speed) {
         this.speed = speed;
@@ -132,4 +132,3 @@ public abstract class Character extends Item
         this.yMove = yMove;
     }
 }
-

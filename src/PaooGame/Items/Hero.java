@@ -28,21 +28,23 @@ public class Hero extends Character
      */
     public Hero(RefLinks refLink, float x, float y)
     {
-            ///Apel al constructorului clasei de baza
+        ///Apel al constructorului clasei de baza
         super(refLink, x,y, Character.DEFAULT_CREATURE_WIDTH, Character.DEFAULT_CREATURE_HEIGHT);
-            ///Seteaza imaginea de start a eroului
-        image = Assets.heroLeft;
-            ///Stabilieste pozitia relativa si dimensiunea dreptunghiului de coliziune, starea implicita(normala)
+        ///Seteaza imaginea de start a eroului (priveste spre dreapta initial)
+        image = Assets.heroRight;
+        ///Stabilieste pozitia relativa si dimensiunea dreptunghiului de coliziune, starea implicita(normala)
         normalBounds.x = 16;
         normalBounds.y = 16;
         normalBounds.width = 16;
         normalBounds.height = 32;
 
-            ///Stabilieste pozitia relativa si dimensiunea dreptunghiului de coliziune, starea de atac
+        ///Stabilieste pozitia relativa si dimensiunea dreptunghiului de coliziune, starea de atac
         attackBounds.x = 10;
         attackBounds.y = 10;
         attackBounds.width = 38;
         attackBounds.height = 38;
+
+        System.out.println("✓ Hero creat - imagine initiala setata");
     }
 
     /*! \fn public void Update()
@@ -51,18 +53,40 @@ public class Hero extends Character
     @Override
     public void Update()
     {
-            ///Verifica daca a fost apasata o tasta
+        ///Verifica daca a fost apasata o tasta
         GetInput();
-            ///Actualizeaza pozitia
+        ///Actualizeaza pozitia
         Move();
-            ///Actualizeaza imaginea
-        if(refLink.GetKeyManager().left == true)
+        ///Actualizeaza imaginea in functie de directia de miscare
+        UpdateImage();
+    }
+
+    /*! \fn private void UpdateImage()
+        \brief Actualizeaza imaginea eroului in functie de directia de miscare.
+     */
+    private void UpdateImage()
+    {
+        // Mapare corecta bazata pe organizarea sprite sheet-ului:
+        // W = spate (randul 0), S = fata (randul 2), D = dreapta (randul 3)
+        // A = foloseste acelasi sprite ca D (randul 3) pentru corpul spre dreapta
+
+        if(refLink.GetKeyManager().up) // W - cu spatele
         {
-            image = Assets.heroLeft;
+            image = Assets.heroBack;    // Randul 0
         }
-        if(refLink.GetKeyManager().right == true) {
-            image = Assets.heroRight;
+        else if(refLink.GetKeyManager().left) // A - cu corpul spre stanga
+        {
+            image = Assets.heroLeft;   // Randul 1
         }
+        else if(refLink.GetKeyManager().down) // S - cu fata
+        {
+            image = Assets.heroFront;   // Randul 2
+        }
+        else if(refLink.GetKeyManager().right) // D - normal spre dreapta
+        {
+            image = Assets.heroRight;   // Randul 3
+        }
+        // Daca nu se apasa nicio tasta, pastreaza imaginea curenta
     }
 
     /*! \fn private void GetInput()
@@ -70,28 +94,28 @@ public class Hero extends Character
      */
     private void GetInput()
     {
-            ///Implicit eroul nu trebuie sa se deplaseze daca nu este apasata o tasta
+        ///Implicit eroul nu trebuie sa se deplaseze daca nu este apasata o tasta
         xMove = 0;
         yMove = 0;
-            ///Verificare apasare tasta "sus"
+        ///Verificare apasare tasta "sus"
         if(refLink.GetKeyManager().up)
         {
             yMove = -speed;
         }
-            ///Verificare apasare tasta "jos"
+        ///Verificare apasare tasta "jos"
         if(refLink.GetKeyManager().down)
         {
             yMove = speed;
         }
-            ///Verificare apasare tasta "left"
+        ///Verificare apasare tasta "stanga" (A)
         if(refLink.GetKeyManager().left)
         {
-            xMove = -speed;
+            xMove = -speed; // Valoare negativa = miscare spre stanga
         }
-            ///Verificare apasare tasta "dreapta"
+        ///Verificare apasare tasta "dreapta" (D)
         if(refLink.GetKeyManager().right)
         {
-            xMove = speed;
+            xMove = speed; // Valoare pozitiva = miscare spre dreapta
         }
     }
 
@@ -105,7 +129,7 @@ public class Hero extends Character
     {
         g.drawImage(image, (int)x, (int)y, width, height, null);
 
-            ///doar pentru debug daca se doreste vizualizarea dreptunghiului de coliziune altfel se vor comenta urmatoarele doua linii
+        ///doar pentru debug daca se doreste vizualizarea dreptunghiului de coliziune altfel se vor comenta urmatoarele doua linii
         //g.setColor(Color.blue);
         //g.fillRect((int)(x + bounds.x), (int)(y + bounds.y), bounds.width, bounds.height);
     }

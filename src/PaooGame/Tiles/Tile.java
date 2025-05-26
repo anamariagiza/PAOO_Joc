@@ -11,11 +11,10 @@ public class Tile
     private static final int NO_TILES   = 32;
     public static Tile[] tiles          = new Tile[NO_TILES];       /*!< Vector de referinte de tipuri de dale.*/
 
-        /// De remarcat ca urmatoarele dale sunt statice si publice. Acest lucru imi permite sa le am incarcate
-        /// o singura data in memorie
+    /// De remarcat ca urmatoarele dale sunt statice si publice. Acest lucru imi permite sa le am incarcate
+    /// o singura data in memorie
 
-    public static Tile treeTile         = new TreeTile(3);      /*!< Dala de tip copac*/
-
+    public static Tile treeTile         = new TreeTile(1);      /*!< Dala de tip copac*/
 
     public static final int TILE_WIDTH  = 48;                       /*!< Latimea unei dale.*/
     public static final int TILE_HEIGHT = 48;                       /*!< Inaltimea unei dale.*/
@@ -54,7 +53,7 @@ public class Tile
      */
     public void Draw(Graphics g, int x, int y)
     {
-            /// Desenare dala
+        /// Desenare dala
         g.drawImage(img, x, y, TILE_WIDTH, TILE_HEIGHT, null);
     }
 
@@ -72,5 +71,39 @@ public class Tile
     public int GetId()
     {
         return id;
+    }
+
+    /*! \fn public static Tile GetGrassTile()
+        \brief Returneaza o dala simpla pentru iarba (desenata direct, nu incarcata din fisier).
+     */
+    public static Tile GetGrassTile()
+    {
+        return new Tile(createGrassImage(), 0) {
+            @Override
+            public boolean IsSolid() {
+                return false;
+            }
+        };
+    }
+
+    /*! \fn private static BufferedImage createGrassImage()
+        \brief Creaza o imagine simpla pentru iarba.
+     */
+    private static BufferedImage createGrassImage()
+    {
+        BufferedImage grassImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = grassImg.createGraphics();
+        g2d.setColor(new Color(34, 139, 34));
+        g2d.fillRect(0, 0, 16, 16);
+        g2d.setColor(new Color(0, 100, 0));
+        g2d.drawRect(0, 0, 15, 15);
+        g2d.setColor(new Color(50, 205, 50));
+        for (int i = 0; i < 8; i++) {
+            int x = (int)(Math.random() * 14) + 1;
+            int y = (int)(Math.random() * 14) + 1;
+            g2d.fillRect(x, y, 1, 2);
+        }
+        g2d.dispose();
+        return grassImg;
     }
 }
