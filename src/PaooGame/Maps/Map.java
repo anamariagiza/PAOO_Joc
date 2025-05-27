@@ -9,31 +9,50 @@ import org.w3c.dom.*;
 
 import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Clasa ce reprezintă o hartă de joc încărcată din fișier .tmx (Tiled).
- * Această versiune încarcă DOAR harta TMX - dacă aceasta eșuează, aplicația va afișa eroarea clar.
+ * Această versiune suportă multiple layer-uri care se desenează unul peste altul.
  */
 public class Map {
     private RefLinks refLink;
     private int width;
     private int height;
-    private int[][] tiles;
-    private Tile grassTile; // Dală de iarbă creată dinamic
-    private boolean mapLoaded = false; // Flag pentru a știi dacă harta s-a încărcat cu succes
+
+    // Lista de layer-uri (fiecare layer are propria sa matrice de tile-uri)
+    private List<MapLayer> layers;
+    private boolean mapLoaded = false;
 
     /**
-     * Constructor ce primește referința principală și încarcă DOAR harta TMX.
+     * Clasa internă pentru a reprezenta un layer al hărții
+     */
+    private static class MapLayer {
+        String name;
+        int[][] tiles;
+        boolean visible;
+
+        public MapLayer(String name, int width, int height) {
+            this.name = name;
+            this.tiles = new int[width][height];
+            this.visible = true;
+        }
+    }
+
+    /**
+     * Constructor ce primește referința principală și încarcă harta TMX cu toate layer-urile.
      */
     public Map(RefLinks refLink) {
         this.refLink = refLink;
+        this.layers = new ArrayList<>();
 
-
-        // Încearcă să încarce harta TMX - dacă eșuează, nu creăm nimic altceva
+        // Încearcă să încarce harta TMX cu toate layer-urile
         try {
             LoadWorldFromTMX("res\\Mapa\\The_map.tmx");
             mapLoaded = true;
             System.out.println("✓ SUCCES! Harta TMX încărcată corect: " + width + "x" + height + " tile-uri");
+            System.out.println("✓ Layer-uri încărcate: " + layers.size());
         } catch (Exception e) {
             mapLoaded = false;
             System.out.println("EROARE CRITICĂ: Harta TMX nu s-a putut încărca!");
@@ -53,11 +72,11 @@ public class Map {
     }
 
     /**
-     * Desenează harta pe ecran DOAR dacă aceasta s-a încărcat cu succes.
+     * Desenează harta pe ecran cu toate layer-urile în ordine.
      */
     public void Draw(Graphics g) {
         // Dacă harta nu s-a încărcat, afișează un mesaj de eroare vizual
-        if (!mapLoaded || tiles == null || width <= 0 || height <= 0) {
+        if (!mapLoaded || layers.isEmpty() || width <= 0 || height <= 0) {
             // Desenează un fundal roșu pentru a indica eroarea
             g.setColor(Color.RED);
             g.fillRect(0, 0, refLink.GetGame().GetWidth(), refLink.GetGame().GetHeight());
@@ -72,7 +91,6 @@ public class Map {
             return;
         }
 
-
         // Calculează câte dale încap pe ecran
         int tilesX = (refLink.GetGame().GetWidth() / Tile.TILE_WIDTH) + 1;
         int tilesY = (refLink.GetGame().GetHeight() / Tile.TILE_HEIGHT) + 1;
@@ -81,47 +99,93 @@ public class Map {
         tilesX = Math.min(tilesX, width);
         tilesY = Math.min(tilesY, height);
 
-        // Desenează harta tile cu tile
-        for (int y = 0; y < tilesY; y++) {
-            for (int x = 0; x < tilesX; x++) {
-                GetTile(x, y).Draw(g, x * Tile.TILE_WIDTH, y * Tile.TILE_HEIGHT);
-            }
+        // Desenează fiecare layer în ordine (primul layer e la fund, ultimul e deasupra)
+        for (MapLayer layer : layers) {
+            if (!layer.visible) continue; // Skip layer-urile invizibile
+
+            DrawLayer(g, layer, tilesX, tilesY);
         }
 
         // Afișează informații despre hartă în colțul stâng-sus pentru confirmare
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 12));
-        g.drawString("Hartă TMX: " + width + "x" + height, 10, 20);
+        g.drawString("Hartă TMX: " + width + "x" + height + " (" + layers.size() + " layer-uri)", 10, 20);
+
+        // Afișează numele layer-urilor
+        for (int i = 0; i < layers.size(); i++) {
+            MapLayer layer = layers.get(i);
+            g.drawString("Layer " + (i + 1) + ": " + layer.name + (layer.visible ? "" : " (ascuns)"), 10, 40 + i * 15);
+        }
     }
 
     /**
-     * Returnează dala la poziția specificată.
+     * Desenează un singur layer
+     */
+    private void DrawLayer(Graphics g, MapLayer layer, int tilesX, int tilesY) {
+        for (int y = 0; y < tilesY; y++) {
+            for (int x = 0; x < tilesX; x++) {
+                int tileId = layer.tiles[x][y];
+
+                // Doar desenează tile-uri care nu sunt goale (ID 0 în multe cazuri înseamnă gol)
+                if (tileId > 0) {
+                    Tile tile = GetTileById(tileId);
+                    if (tile != null) {
+                        tile.Draw(g, x * Tile.TILE_WIDTH, y * Tile.TILE_HEIGHT);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Returnează dala de pe primul layer la poziția specificată (pentru compatibilitate).
      */
     public Tile GetTile(int x, int y) {
-        if (!mapLoaded || tiles == null) {
+        return GetTile(x, y, 0); // primul layer
+    }
+
+    /**
+     * Returnează dala de pe layer-ul specificat la poziția specificată.
+     */
+    public Tile GetTile(int x, int y, int layerIndex) {
+        if (!mapLoaded || layers.isEmpty()) {
             throw new IllegalStateException("Harta nu este încărcată, nu pot returna tile.");
+        }
+
+        if (layerIndex < 0 || layerIndex >= layers.size()) {
+            throw new IndexOutOfBoundsException("Layer-ul " + layerIndex + " nu există. Layer-uri disponibile: 0-" + (layers.size() - 1));
         }
 
         if (x < 0 || y < 0 || x >= width || y >= height) {
             throw new IndexOutOfBoundsException("Tile [" + x + "," + y + "] este în afara hărții.");
         }
 
-        int tileId = tiles[x][y];
+        int tileId = layers.get(layerIndex).tiles[x][y];
+        return GetTileById(tileId);
+    }
 
-        if (tileId < 0 || tileId >= Tile.tiles.length) {
-            throw new IllegalArgumentException("ID invalid de tile: " + tileId + " la [" + x + "," + y + "]");
+    /**
+     * Returnează tile-ul pe baza ID-ului
+     */
+    private Tile GetTileById(int tileId) {
+        if (tileId <= 0) {
+            return null; // Tile gol sau invalid
+        }
+
+        if (tileId >= Tile.tiles.length) {
+            throw new IllegalArgumentException("ID invalid de tile: " + tileId);
         }
 
         Tile tile = Tile.tiles[tileId];
         if (tile == null) {
-            throw new IllegalStateException("Tile-ul cu ID " + tileId + " este null la [" + x + "," + y + "]");
+            throw new IllegalStateException("Tile-ul cu ID " + tileId + " este null");
         }
 
         return tile;
     }
 
     /**
-     * Încarcă harta dintr-un fișier .tmx în format CSV cu logging detaliat.
+     * Încarcă harta dintr-un fișier .tmx cu toate layer-urile în format CSV.
      */
     private void LoadWorldFromTMX(String path) throws Exception {
         System.out.println("🔄 Începe încărcarea hărții TMX din: " + path);
@@ -172,10 +236,7 @@ public class Map {
             throw new Exception("Dimensiunile hărții sunt invalide: " + width + "x" + height);
         }
 
-        // Inițializează matricea de tile-uri
-        tiles = new int[width][height];
-
-        // Găsește primul layer
+        // Găsește toate layer-urile
         NodeList layerList = doc.getElementsByTagName("layer");
         System.out.println("🎭 Numărul de layer-uri găsite: " + layerList.getLength());
 
@@ -183,78 +244,118 @@ public class Map {
             throw new Exception("Nu s-au găsit layer-uri în fișierul TMX");
         }
 
-        Element layer = (Element) layerList.item(0);
-        String layerName = layer.getAttribute("name");
-        System.out.println("🎯 Se folosește primul layer: '" + layerName + "'");
+        // Procesează fiecare layer
+        for (int layerIndex = 0; layerIndex < layerList.getLength(); layerIndex++) {
+            Element layer = (Element) layerList.item(layerIndex);
+            String layerName = layer.getAttribute("name");
+            String visibleAttr = layer.getAttribute("visible");
+            boolean visible = visibleAttr.isEmpty() || !"0".equals(visibleAttr);
 
-        // Găsește datele din layer
-        NodeList dataList = layer.getElementsByTagName("data");
-        if (dataList.getLength() == 0) {
-            throw new Exception("Nu s-au găsit elemente 'data' în layer-ul '" + layerName + "'");
-        }
+            System.out.println("🎯 Se procesează layer-ul " + (layerIndex + 1) + ": '" + layerName + "' (vizibil: " + visible + ")");
 
-        Element data = (Element) dataList.item(0);
-        String encoding = data.getAttribute("encoding");
-        String compression = data.getAttribute("compression");
+            // Creează un nou layer
+            MapLayer mapLayer = new MapLayer(layerName, width, height);
+            mapLayer.visible = visible;
 
-        System.out.println("💾 Encoding date: '" + (encoding.isEmpty() ? "none" : encoding) + "'");
-        System.out.println("🗜️ Compresie: '" + (compression.isEmpty() ? "none" : compression) + "'");
+            // Găsește datele din layer
+            NodeList dataList = layer.getElementsByTagName("data");
+            if (dataList.getLength() == 0) {
+                System.out.println("⚠️ Layer-ul '" + layerName + "' nu are date, se sare");
+                continue;
+            }
 
-        // Verifică encoding-ul (acceptăm doar CSV sau fără encoding)
-        if (!encoding.isEmpty() && !"csv".equals(encoding)) {
-            throw new Exception("Encoding '" + encoding + "' nu este suportat. Folosește CSV în Tiled.");
-        }
+            Element data = (Element) dataList.item(0);
+            String encoding = data.getAttribute("encoding");
+            String compression = data.getAttribute("compression");
 
-        if (!compression.isEmpty()) {
-            throw new Exception("Compresia '" + compression + "' nu este suportată. Dezactivează compresia în Tiled.");
-        }
+            System.out.println("💾 Encoding date pentru '" + layerName + "': '" + (encoding.isEmpty() ? "none" : encoding) + "'");
 
-        // Extrage și procesează datele CSV
-        String csvData = data.getTextContent().trim();
-        System.out.println("📊 Lungimea datelor brute: " + csvData.length() + " caractere");
+            // Verifică encoding-ul
+            if (!encoding.isEmpty() && !"csv".equals(encoding)) {
+                throw new Exception("Encoding '" + encoding + "' nu este suportat pentru layer-ul '" + layerName + "'. Folosește CSV în Tiled.");
+            }
 
-        if (csvData.isEmpty()) {
-            throw new Exception("Datele CSV sunt goale în elementul 'data'");
-        }
+            if (!compression.isEmpty()) {
+                throw new Exception("Compresia '" + compression + "' nu este suportată pentru layer-ul '" + layerName + "'. Dezactivează compresia în Tiled.");
+            }
 
-        // Curăță datele CSV (elimină spații, newlines, etc.)
-        csvData = csvData.replaceAll("\\s+", "");
-        String[] tileIds = csvData.split(",");
+            // Extrage și procesează datele CSV
+            String csvData = data.getTextContent().trim();
+            if (csvData.isEmpty()) {
+                System.out.println("⚠️ Layer-ul '" + layerName + "' are date goale, se umple cu 0");
+                // Layer-ul rămâne cu toate tile-urile 0 (goale)
+            } else {
+                // Procesează datele CSV
+                csvData = csvData.replaceAll("\\s+", "");
+                String[] tileIds = csvData.split(",");
 
-        System.out.println("🔍 Numărul de tile-uri procesate: " + tileIds.length);
-        System.out.println("🎯 Numărul de tile-uri așteptat: " + (width * height));
+                if (tileIds.length != width * height) {
+                    throw new Exception("Nepotrivire în numărul de tile-uri pentru layer-ul '" + layerName + "'! Găsite: " + tileIds.length +
+                            ", așteptate: " + (width * height));
+                }
 
-        if (tileIds.length != width * height) {
-            throw new Exception("Nepotrivire în numărul de tile-uri! Găsite: " + tileIds.length +
-                    ", așteptate: " + (width * height) +
-                    ". Verifică dimensiunile hărții în Tiled.");
-        }
-
-        // Procesează fiecare tile și populează matricea
-        System.out.println("⚙️ Se procesează tile-urile...");
-        int processedTiles = 0;
-
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                int index = y * width + x;
-                try {
-                    int id = Integer.parseInt(tileIds[index].trim());
-
-                    // Convertește ID-ul TMX la ID-ul nostru
-                    // În Tiled, 0 = gol, 1+ = tile-uri
-                    // În codul nostru: 0 = iarbă, 1 = copac
-                    tiles[x][y] = id; // păstrează ID-ul exact din TMX
-
-                    processedTiles++;
-                } catch (NumberFormatException e) {
-                    throw new Exception("ID de tile invalid la poziția [" + x + "," + y +
-                            "] (index " + index + "): '" + tileIds[index] + "'");
+                // Populează matricea layer-ului
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        int index = y * width + x;
+                        try {
+                            int id = Integer.parseInt(tileIds[index].trim());
+                            mapLayer.tiles[x][y] = id;
+                        } catch (NumberFormatException e) {
+                            throw new Exception("ID de tile invalid în layer-ul '" + layerName + "' la poziția [" + x + "," + y +
+                                    "] (index " + index + "): '" + tileIds[index] + "'");
+                        }
+                    }
                 }
             }
+
+            // Adaugă layer-ul la listă
+            layers.add(mapLayer);
+            System.out.println("✅ Layer-ul '" + layerName + "' procesat cu succes");
         }
 
-        System.out.println("✅ Procesare completă! " + processedTiles + " tile-uri procesate cu succes");
-        System.out.println("🎉 Harta TMX a fost încărcată complet și este gata de utilizare!");
+        System.out.println("🎉 Harta TMX cu " + layers.size() + " layer-uri a fost încărcată complet!");
+    }
+
+    /**
+     * Ascunde sau afișează un layer
+     */
+    public void SetLayerVisible(int layerIndex, boolean visible) {
+        if (layerIndex >= 0 && layerIndex < layers.size()) {
+            layers.get(layerIndex).visible = visible;
+            System.out.println("Layer " + layerIndex + " (" + layers.get(layerIndex).name + ") " +
+                    (visible ? "afișat" : "ascuns"));
+        }
+    }
+
+    /**
+     * Ascunde sau afișează un layer pe baza numelui
+     */
+    public void SetLayerVisible(String layerName, boolean visible) {
+        for (int i = 0; i < layers.size(); i++) {
+            if (layers.get(i).name.equals(layerName)) {
+                SetLayerVisible(i, visible);
+                return;
+            }
+        }
+        System.out.println("⚠️ Layer-ul cu numele '" + layerName + "' nu a fost găsit");
+    }
+
+    /**
+     * Returnează numărul de layer-uri
+     */
+    public int getLayerCount() {
+        return layers.size();
+    }
+
+    /**
+     * Returnează numele unui layer
+     */
+    public String getLayerName(int layerIndex) {
+        if (layerIndex >= 0 && layerIndex < layers.size()) {
+            return layers.get(layerIndex).name;
+        }
+        return null;
     }
 
     /**
@@ -269,7 +370,7 @@ public class Map {
      */
     public String getMapInfo() {
         if (mapLoaded) {
-            return "Hartă TMX: " + width + "x" + height + " tile-uri";
+            return "Hartă TMX: " + width + "x" + height + " tile-uri, " + layers.size() + " layer-uri";
         } else {
             return "Harta TMX nu este încărcată";
         }
