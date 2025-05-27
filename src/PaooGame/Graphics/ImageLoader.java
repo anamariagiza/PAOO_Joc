@@ -18,7 +18,7 @@ public class ImageLoader
      */
     public static BufferedImage LoadImage(String path)
     {
-        System.out.println("🔍 incercare incarcare: " + path);
+        System.out.println("incercare incarcare: " + path);
 
         try
         {
@@ -35,8 +35,8 @@ public class ImageLoader
 
             // Daca resursa nu exista in classpath, incarca ca fisier
             File file = new File(path);
-            System.out.println("📁 Verificare fisier: " + file.getAbsolutePath());
-            System.out.println("📁 Fisierul exista: " + file.exists());
+            System.out.println("Verificare fisier: " + file.getAbsolutePath());
+            System.out.println("Fisierul exista: " + file.exists());
 
             if (file.exists()) {
                 BufferedImage img = ImageIO.read(file);
@@ -44,10 +44,10 @@ public class ImageLoader
                     System.out.println("✓ Imagine incarcata ca fisier: " + path + " (" + img.getWidth() + "x" + img.getHeight() + ")");
                     return img;
                 } else {
-                    System.out.println("❌ Fisierul exista dar nu se poate citi ca imagine: " + path);
+                    System.out.println("Fisierul exista dar nu se poate citi ca imagine: " + path);
                 }
             } else {
-                System.out.println("❌ Fisierul nu exista: " + file.getAbsolutePath());
+                System.out.println("Fisierul nu exista: " + file.getAbsolutePath());
             }
 
             // incearca si fara slash-ul de la inceput pentru classpath
