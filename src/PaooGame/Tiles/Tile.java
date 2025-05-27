@@ -8,17 +8,22 @@ import java.awt.image.BufferedImage;
  */
 public class Tile
 {
-    private static final int NO_TILES   = 16;
+    private static final int NO_TILES   = 200;
     public static Tile[] tiles          = new Tile[NO_TILES];       /*!< Vector de referinte de tipuri de dale.*/
 
     /// De remarcat ca urmatoarele dale sunt statice si publice. Acest lucru imi permite sa le am incarcate
     /// o singura data in memorie
 
 
+
     public static Tile grassTile         = new GrassTile(82);
+    public static Tile grassTile2         = new GrassTile2(98);
     public static Tile soilTile         = new SoilTile(17);
     public static Tile waterTile         = new WaterTile(145);
     public static Tile deepWaterTile       = new DeepWaterTile(180);
+    public static Tile rigthMarginSoil      = new RigthMarginSoilTile(83);
+    public static Tile rigthMarginSoil2   =new RigthMarginSoilTile2(99);
+    public static Tile leftTopCornerSoil = new LeftTopCornerSoil(0);
 
     public static final int TILE_WIDTH  = 16;                       /*!< Latimea unei dale.*/
     public static final int TILE_HEIGHT = 16;                       /*!< Inaltimea unei dale.*/

@@ -14,9 +14,13 @@ public class Assets
 {
     /// Referinte catre elementele grafice (dale) utilizate in joc.
     public static BufferedImage grass;
+    public static BufferedImage grass2;
     public static BufferedImage water;
     public static BufferedImage deepWater;
     public static BufferedImage soil;
+    public static BufferedImage rigthMarginSoil;
+    public static BufferedImage rigthMarginSoil2;
+    public static BufferedImage leftTopCornerSoil;
     public static BufferedImage heroLeft;
     public static BufferedImage heroRight;
     public static BufferedImage heroFront;  /*!< Sprite pentru fata eroului (S) */
@@ -113,10 +117,14 @@ public class Assets
 //                public static BufferedImage water;
 //                public static BufferedImage deepWater;
 //                public static BufferedImage soil;
-                grass = mapSheet.crop(1, 5); // tile (0,0) - primul tile
+                grass = mapSheet.crop(1, 5);
+                grass2 = mapSheet.crop(3,7);
                 water = mapSheet.crop(1, 9);
                 deepWater = mapSheet.crop(4, 11);
                 soil = mapSheet.crop(1, 1);
+                rigthMarginSoil = mapSheet.crop(3,6);
+                rigthMarginSoil2 = mapSheet.crop(3,7);
+                leftTopCornerSoil = mapSheet.crop(0,0);
 
                 System.out.println("✓ Dale incarcate cu succes:");
                 System.out.println("  grass: " + grass.getWidth() + "x" + grass.getHeight() + " de la pozitia (0,0)");
